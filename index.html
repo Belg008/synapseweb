@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SynapseWeb — Delte AI-Minne</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon" aria-hidden="true"></div>
+                    <div class="logo-text">
+                        <h1>SynapseWeb</h1>
+                        <span>Delte AI-Minne</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Statistikk</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="node-count">0</span>
+                        <span class="stat-label">Noder</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="connection-count">0</span>
+                        <span class="stat-label">Koblingar</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="agent-count">1</span>
+                        <span class="stat-label">Agentar</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Søk</h3>
+                <input type="text" id="search-input" placeholder="Søk i minnet...">
+                <div id="search-results"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Kategoriar</h3>
+                <div class="category-list" id="category-list">
+                    <div class="category-item active" data-category="all">
+                        <span class="category-dot"></span>
+                        <span>Alle</span>
+                        <span class="category-count" id="count-all">0</span>
+                    </div>
+                    <div class="category-item" data-category="person">
+                        <span class="category-dot"></span>
+                        <span>Person</span>
+                        <span class="category-count" id="count-person">0</span>
+                    </div>
+                    <div class="category-item" data-category="kunnskap">
+                        <span class="category-dot"></span>
+                        <span>Kunnskap</span>
+                        <span class="category-count" id="count-kunnskap">0</span>
+                    </div>
+                    <div class="category-item" data-category="prosjekt">
+                        <span class="category-dot"></span>
+                        <span>Prosjekt</span>
+                        <span class="category-count" id="count-prosjekt">0</span>
+                    </div>
+                    <div class="category-item" data-category="preferanse">
+                        <span class="category-dot"></span>
+                        <span>Preferanse</span>
+                        <span class="category-count" id="count-preferanse">0</span>
+                    </div>
+                    <div class="category-item" data-category="hending">
+                        <span class="category-dot"></span>
+                        <span>Hending</span>
+                        <span class="category-count" id="count-hending">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary" id="add-node-btn">Ny node</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="top-bar">
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="network">Nettverk</button>
+                    <button class="view-btn" data-view="hierarchical">Hierarki</button>
+                </div>
+                <div class="top-actions">
+                    <button class="btn-icon" id="reset-view-btn" title="Nullstill visning" aria-label="Nullstill visning"></button>
+                    <button class="btn-icon" id="fit-btn" title="Tilpass til skjerm" aria-label="Tilpass til skjerm"></button>
+                </div>
+            </div>
+
+            <div id="network-container"></div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon" aria-hidden="true"></div>
+                <h2>Tomt kunnskapsunivers</h2>
+                <p>Det er ingen noder ennå. Start ein samtale eller legg til ein node for å byggja ditt delte minne!</p>
+                <button class="btn btn-primary" id="empty-add-btn">Legg til første node</button>
+            </div>
+        </main>
+
+        <!-- Node Detail Panel -->
+        <div class="panel panel-right" id="detail-panel">
+            <div class="panel-header">
+                <h2>Node-detaljar</h2>
+                <button class="panel-close" id="close-detail">✕</button>
+            </div>
+            <div class="panel-content" id="detail-content">
+                <p>Velg ein node for å sjå detaljar.</p>
+            </div>
+        </div>
+
+        <!-- Add Node Modal -->
+        <div class="modal" id="add-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Legg til ny node</h2>
+                    <button class="modal-close" id="close-modal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Tittel</label>
+                        <input type="text" id="node-title" placeholder="Kva handlar dette om?">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="node-category">
+                            <option value="person">Person</option>
+                            <option value="kunnskap">Kunnskap</option>
+                            <option value="prosjekt">Prosjekt</option>
+                            <option value="preferanse">Preferanse</option>
+                            <option value="hending">Hending</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Innhold</label>
+                        <textarea id="node-content" rows="6" placeholder="Skriv detaljene her..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Kopla til (valfri)</label>
+                        <select id="node-parent">
+                            <option value="">Ingen (hovednode)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tags (komma-separert)</label>
+                        <input type="text" id="node-tags" placeholder="t.d. viktig, ai, hobby">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-add">Avbryt</button>
+                    <button class="btn btn-primary" id="save-node">Lagre</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
