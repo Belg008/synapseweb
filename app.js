@@ -45,8 +45,10 @@ async function loadFromAPI() {
         nodes.clear();
         edges.clear();
 
-        // Konverter API-noder til vis.js format
-        const visNodes = apiNodes.map(n => ({
+        // Konverter API-noder til vis.js format (block unsolicited agent nodes)
+        const visNodes = apiNodes
+            .filter(n => !n.agent_id || n.agent_id === 'web-ui')
+            .map(n => ({
             id: n.id,
             label: n.label,
             category: n.category,
@@ -56,11 +58,14 @@ async function loadFromAPI() {
             date: n.created_at
         }));
 
-        const visEdges = apiEdges.map(e => ({
-            id: e.id,
-            from: e.from_node,
-            to: e.to_node
-        }));
+        const allowedNodeIds = new Set(visNodes.map(n => n.id));
+        const visEdges = apiEdges
+            .filter(e => allowedNodeIds.has(e.from_node) && allowedNodeIds.has(e.to_node))
+            .map(e => ({
+                id: e.id,
+                from: e.from_node,
+                to: e.to_node
+            }));
 
         if (visNodes.length === 0) {
             // Legg til demo-data via API
